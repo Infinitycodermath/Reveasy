@@ -71,7 +71,7 @@
 
           // Add select box for changing the mode
           const select = document.createElement('select');
-          ['s', 'r', 'p', 'us', 'ur', 'up', 'n'].forEach(option => {
+          ['S', 'R', 'P', 'US', 'UR', 'UP', 'N'].forEach(option => {
             const opt = document.createElement('option');
             opt.value = option;
             opt.textContent = option;
@@ -83,7 +83,7 @@
 
           // Button to defer the assignment based on mode
           const deferButton = document.createElement('button');
-          deferButton.textContent = "Defer";
+          deferButton.textContent = "COMPLETED";
 
           // On clicking defer button, update the show date based on selected mode
           deferButton.addEventListener('click', function () {

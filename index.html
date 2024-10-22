@@ -118,10 +118,8 @@
     
     let assignments = [];
     let completedAssignments = [];
-    let loggedIn = localStorage.getItem('loggedIn') === 'true';
-    let storedUsername = localStorage.getItem('username');
-    let storedPassword = localStorage.getItem('password');
-    let currentUser = localStorage.getItem('currentUser');
+    let loggedIn = false;
+    let currentUser = null;
 
     // Add delays for modes (in days)
     const modeDelays = {
@@ -131,7 +129,7 @@
       US: 13,
       UR: 15,
       UP: 17,
-      N: 0 // 'N' should show immediately when selected and deferred
+      N: 0 // 'N' should show immediately when selected
     };
 
     // Function to calculate future date
@@ -145,49 +143,33 @@
     function displayAssignments() {
       assignmentList.innerHTML = ''; // Clear current list
 
-      assignments.forEach((assignment, index) => {
-        const showDate = new Date(assignment.showDate);
-        const today = new Date();
+      assignments.forEach((assignment) => {
+        const li = document.createElement('li');
+        li.textContent = `${assignment.study} - Due: ${new Date(assignment.showDate).toDateString()}`;
 
-        if (showDate <= today) {
-          const li = document.createElement('li');
-          li.textContent = `${assignment.study} - Due: ${showDate.toDateString()}`;
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
 
-          const checkbox = document.createElement('input');
-          checkbox.type = 'checkbox';
+        const deferButton = document.createElement('button');
+        deferButton.textContent = "Completed";
 
-          const select = document.createElement('select');
-          ['S', 'R', 'P', 'US', 'UR', 'UP', 'N'].forEach(option => {
-            const opt = document.createElement('option');
-            opt.value = option;
-            opt.textContent = option;
-            select.appendChild(opt);
-          });
+        deferButton.addEventListener('click', function () {
+          if (checkbox.checked) {
+            completedAssignments.push(assignment);
+            assignments = assignments.filter(a => a !== assignment);
 
-          select.value = assignment.mode;
+            saveAssignments();
+            saveCompletedAssignments();
+            displayAssignments();
+            displayCompletedAssignments();
+          } else {
+            alert('Please check the checkbox before marking the assignment as completed.');
+          }
+        });
 
-          const deferButton = document.createElement('button');
-          deferButton.textContent = "Completed";
-
-          deferButton.addEventListener('click', function () {
-            if (checkbox.checked) {
-              completedAssignments.push(assignment);
-              assignments.splice(index, 1);
-
-              saveAssignments();
-              saveCompletedAssignments();
-              displayAssignments();
-              displayCompletedAssignments();
-            } else {
-              alert('Please check the checkbox before marking the assignment as completed.');
-            }
-          });
-
-          li.appendChild(checkbox);
-          li.appendChild(select);
-          li.appendChild(deferButton);
-          assignmentList.appendChild(li);
-        }
+        li.appendChild(checkbox);
+        li.appendChild(deferButton);
+        assignmentList.appendChild(li);
       });
     }
 
@@ -205,12 +187,14 @@
 
     // Function to save assignments to localStorage for the current user
     function saveAssignments() {
-      localStorage.setItem(`${currentUser}_assignments`, JSON.stringify(assignments));
+      const userAssignments = JSON.stringify(assignments);
+      localStorage.setItem(`${currentUser}_assignments`, userAssignments);
     }
 
     // Function to save completed assignments to localStorage for the current user
     function saveCompletedAssignments() {
-      localStorage.setItem(`${currentUser}_completedAssignments`, JSON.stringify(completedAssignments));
+      const userCompletedAssignments = JSON.stringify(completedAssignments);
+      localStorage.setItem(`${currentUser}_completedAssignments`, userCompletedAssignments);
     }
 
     // Show the signup form if user clicks on signup link
@@ -226,13 +210,18 @@
       const newUsername = document.getElementById('signupUsername').value;
       const newPassword = document.getElementById('signupPassword').value;
 
-      localStorage.setItem('username', newUsername);
-      localStorage.setItem('password', newPassword);
+      // Store user credentials in localStorage
+      const userCredentials = JSON.parse(localStorage.getItem('userCredentials')) || {};
+      if (userCredentials[newUsername]) {
+        alert('Username already exists. Please choose a different username.');
+      } else {
+        userCredentials[newUsername] = newPassword;
+        localStorage.setItem('userCredentials', JSON.stringify(userCredentials));
+        alert('Signup successful! You can now log in.');
 
-      alert('Signup successful! You can now log in.');
-
-      signupContainer.classList.add('hidden');
-      loginContainer.classList.remove('hidden');
+        signupContainer.classList.add('hidden');
+        loginContainer.classList.remove('hidden');
+      }
     });
 
     // Login form submission event handler
@@ -241,13 +230,10 @@
       const username = document.getElementById('username').value;
       const password = document.getElementById('password').value;
 
-      storedUsername = localStorage.getItem('username');
-      storedPassword = localStorage.getItem('password');
-
-      if (username === storedUsername && password === storedPassword) {
+      // Get user credentials from localStorage
+      const userCredentials = JSON.parse(localStorage.getItem('userCredentials')) || {};
+      if (userCredentials[username] && userCredentials[username] === password) {
         loggedIn = true;
-        localStorage.setItem('loggedIn', 'true');
-        localStorage.setItem('currentUser', username);
         currentUser = username;
 
         // Load assignments for the current user
@@ -268,7 +254,29 @@
       loggedIn = false;
       localStorage.setItem('loggedIn', 'false');
       localStorage.removeItem('currentUser');
-      location.reload(); // Reload the page to go back to login screen
+      location.reload(); // Reload the page to go back to the login screen
+    });
+
+    // Form submission event handler to add new study
+    form.addEventListener('submit', function(event) {
+      event.preventDefault();
+      const study = document.getElementById('study').value;
+      const mode = document.getElementById('mode').value;
+
+      const showDate = calculateFutureDate(modeDelays[mode]);
+
+      // Add new assignment
+      assignments.push({
+        study,
+        mode,
+        showDate: mode === 'N' ? new Date() : showDate // Show immediately for mode 'N'
+      });
+
+      saveAssignments();
+      displayAssignments();
+
+      // Reset the form
+      form.reset();
     });
 
     // Check login status on page load
@@ -285,7 +293,6 @@
       }
     }
 
-    // Check login status on page load
     checkLoginStatus();
   </script>
 </body>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>REVEASY</title>
+  <title>REVEASY!</title>
   <style>
     .container {
       display: flex;
@@ -18,6 +18,21 @@
     .striked {
       text-decoration: line-through;
     }
+    /* Style for the circular logout button */
+    .logout-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: red;
+      color: white;
+      border: none;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -25,10 +40,10 @@
   <div id="signupContainer" class="hidden">
     <h1 align="center" style="color: blue">Signup</h1>
     <form id="signupForm">
-      <label for="signupUsername">USERNAME:</label>
+      <label for="signupUsername">New Username:</label>
       <input type="text" id="signupUsername" name="signupUsername" required>
       
-      <label for="signupPassword">PASSWORD:</label>
+      <label for="signupPassword">New Password:</label>
       <input type="password" id="signupPassword" name="signupPassword" required>
       
       <button type="submit">Sign Up</button>
@@ -52,6 +67,7 @@
 
   <!-- Assignment Tracker (hidden by default) -->
   <div id="assignmentTracker" class="hidden">
+    <button class="logout-btn" id="logoutBtn">X</button> <!-- Circular Logout Button -->
     <h1 align="center" style="color: green">WELCOME TO REVEASY!</h1>
 
     <div class="container">
@@ -98,13 +114,14 @@
     const loginContainer = document.getElementById('loginContainer');
     const assignmentTracker = document.getElementById('assignmentTracker');
     const signupLink = document.getElementById('signupLink');
+    const logoutBtn = document.getElementById('logoutBtn');
     
-    // Get assignments and completed studies from localStorage or initialize empty arrays
-    let assignments = JSON.parse(localStorage.getItem('assignments')) || [];
-    let completedAssignments = JSON.parse(localStorage.getItem('completedAssignments')) || [];
+    let assignments = [];
+    let completedAssignments = [];
     let loggedIn = localStorage.getItem('loggedIn') === 'true';
     let storedUsername = localStorage.getItem('username');
     let storedPassword = localStorage.getItem('password');
+    let currentUser = localStorage.getItem('currentUser');
 
     // Add delays for modes (in days)
     const modeDelays = {
@@ -132,16 +149,13 @@
         const showDate = new Date(assignment.showDate);
         const today = new Date();
 
-        // Only show assignments if the show date is past or today
         if (showDate <= today) {
           const li = document.createElement('li');
           li.textContent = `${assignment.study} - Due: ${showDate.toDateString()}`;
 
-          // Add checkbox for marking the assignment
           const checkbox = document.createElement('input');
           checkbox.type = 'checkbox';
 
-          // Add select box for changing the mode
           const select = document.createElement('select');
           ['S', 'R', 'P', 'US', 'UR', 'UP', 'N'].forEach(option => {
             const opt = document.createElement('option');
@@ -150,21 +164,16 @@
             select.appendChild(opt);
           });
 
-          // Set current mode in the select box
           select.value = assignment.mode;
 
-          // Button to defer the assignment based on mode
           const deferButton = document.createElement('button');
           deferButton.textContent = "Completed";
 
-          // On clicking defer button, update the show date based on selected mode
           deferButton.addEventListener('click', function () {
             if (checkbox.checked) {
-              // Move assignment to completed list
               completedAssignments.push(assignment);
-              assignments.splice(index, 1); // Remove from assignments
+              assignments.splice(index, 1);
 
-              // Save and refresh
               saveAssignments();
               saveCompletedAssignments();
               displayAssignments();
@@ -174,7 +183,6 @@
             }
           });
 
-          // Append the checkbox, select box, and button to the list item
           li.appendChild(checkbox);
           li.appendChild(select);
           li.appendChild(deferButton);
@@ -185,7 +193,7 @@
 
     // Function to display completed assignments
     function displayCompletedAssignments() {
-      completedList.innerHTML = ''; // Clear current list
+      completedList.innerHTML = '';
 
       completedAssignments.forEach((assignment) => {
         const li = document.createElement('li');
@@ -195,14 +203,14 @@
       });
     }
 
-    // Function to save assignments to localStorage
+    // Function to save assignments to localStorage for the current user
     function saveAssignments() {
-      localStorage.setItem('assignments', JSON.stringify(assignments));
+      localStorage.setItem(`${currentUser}_assignments`, JSON.stringify(assignments));
     }
 
-    // Function to save completed assignments to localStorage
+    // Function to save completed assignments to localStorage for the current user
     function saveCompletedAssignments() {
-      localStorage.setItem('completedAssignments', JSON.stringify(completedAssignments));
+      localStorage.setItem(`${currentUser}_completedAssignments`, JSON.stringify(completedAssignments));
     }
 
     // Show the signup form if user clicks on signup link
@@ -218,13 +226,11 @@
       const newUsername = document.getElementById('signupUsername').value;
       const newPassword = document.getElementById('signupPassword').value;
 
-      // Store the new username and password in localStorage
       localStorage.setItem('username', newUsername);
       localStorage.setItem('password', newPassword);
 
       alert('Signup successful! You can now log in.');
 
-      // Redirect to login
       signupContainer.classList.add('hidden');
       loginContainer.classList.remove('hidden');
     });
@@ -235,13 +241,19 @@
       const username = document.getElementById('username').value;
       const password = document.getElementById('password').value;
 
-      // Retrieve credentials from localStorage
       storedUsername = localStorage.getItem('username');
       storedPassword = localStorage.getItem('password');
 
-      // Check if entered credentials match the stored ones
       if (username === storedUsername && password === storedPassword) {
+        loggedIn = true;
         localStorage.setItem('loggedIn', 'true');
+        localStorage.setItem('currentUser', username);
+        currentUser = username;
+
+        // Load assignments for the current user
+        assignments = JSON.parse(localStorage.getItem(`${currentUser}_assignments`)) || [];
+        completedAssignments = JSON.parse(localStorage.getItem(`${currentUser}_completedAssignments`)) || [];
+
         loginContainer.classList.add('hidden');
         assignmentTracker.classList.remove('hidden');
         displayAssignments();
@@ -251,11 +263,23 @@
       }
     });
 
-    // Function to check login status and display appropriate content
+    // Logout button event handler
+    logoutBtn.addEventListener('click', function() {
+      loggedIn = false;
+      localStorage.setItem('loggedIn', 'false');
+      localStorage.removeItem('currentUser');
+      location.reload(); // Reload the page to go back to login screen
+    });
+
+    // Check login status on page load
     function checkLoginStatus() {
-      if (loggedIn) {
+      if (loggedIn && currentUser) {
         loginContainer.classList.add('hidden');
         assignmentTracker.classList.remove('hidden');
+
+        assignments = JSON.parse(localStorage.getItem(`${currentUser}_assignments`)) || [];
+        completedAssignments = JSON.parse(localStorage.getItem(`${currentUser}_completedAssignments`)) || [];
+        
         displayAssignments();
         displayCompletedAssignments();
       }

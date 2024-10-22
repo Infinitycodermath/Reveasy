@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Assignment Tracker</title>
+  <title>REVEASY</title>
   <style>
     .container {
       display: flex;
@@ -12,44 +12,79 @@
     .left-pane, .right-pane {
       width: 45%;
     }
+    .hidden {
+      display: none;
+    }
     .striked {
       text-decoration: line-through;
     }
   </style>
 </head>
 <body>
-  <h1 align="center" style="color: green">WELCOME TO REVEASY!</h1>
+  <!-- Signup Form -->
+  <div id="signupContainer" class="hidden">
+    <h1 align="center" style="color: blue">Signup</h1>
+    <form id="signupForm">
+      <label for="signupUsername">USERNAME:</label>
+      <input type="text" id="signupUsername" name="signupUsername" required>
+      
+      <label for="signupPassword">PASSWORD:</label>
+      <input type="password" id="signupPassword" name="signupPassword" required>
+      
+      <button type="submit">Sign Up</button>
+    </form>
+  </div>
 
-  <div class="container">
-    <!-- Left Pane: Form and Upcoming Assignments -->
-    <div class="left-pane">
-      <!-- Form to input the study and mode -->
-      <form id="studyForm">
-        <label for="study">Enter Study:</label>
-        <input type="text" id="study" name="study" required>
+  <!-- Login Form -->
+  <div id="loginContainer">
+    <h1 align="center" style="color: blue">Login</h1>
+    <form id="loginForm">
+      <label for="username">Username:</label>
+      <input type="text" id="username" name="username" required>
+      
+      <label for="password">Password:</label>
+      <input type="password" id="password" name="password" required>
+      
+      <button type="submit">Login</button>
+    </form>
+    <p>Don't have an account? <a href="#" id="signupLink">Sign up here</a></p>
+  </div>
 
-        <label for="mode">Mode:</label>
-        <select id="mode" name="mode" required>
-          <option value="S">S</option>
-          <option value="R">R</option>
-          <option value="P">P</option>
-          <option value="US">US</option>
-          <option value="UR">UR</option>
-          <option value="UP">UP</option>
-          <option value="N">N</option>
-        </select>
+  <!-- Assignment Tracker (hidden by default) -->
+  <div id="assignmentTracker" class="hidden">
+    <h1 align="center" style="color: green">WELCOME TO REVEASY!</h1>
 
-        <button type="submit">Add Study</button>
-      </form>
+    <div class="container">
+      <!-- Left Pane: Form and Upcoming Assignments -->
+      <div class="left-pane">
+        <!-- Form to input the study and mode -->
+        <form id="studyForm">
+          <label for="study">Enter Study:</label>
+          <input type="text" id="study" name="study" required>
 
-      <h2 align="center" style="color: green">UPCOMING AND PENDING ASSIGNMENTS:</h2>
-      <ul id="assignmentList"></ul>
-    </div>
+          <label for="mode">Mode:</label>
+          <select id="mode" name="mode" required>
+            <option value="S">S</option>
+            <option value="R">R</option>
+            <option value="P">P</option>
+            <option value="US">US</option>
+            <option value="UR">UR</option>
+            <option value="UP">UP</option>
+            <option value="N">N</option>
+          </select>
 
-    <!-- Right Pane: Completed Assignments -->
-    <div class="right-pane">
-      <h2 align="center" style="color: blue">COMPLETED ASSIGNMENTS:</h2>
-      <ul id="completedList"></ul>
+          <button type="submit">Add Study</button>
+        </form>
+
+        <h2 align="center" style="color: green">UPCOMING AND PENDING ASSIGNMENTS:</h2>
+        <ul id="assignmentList"></ul>
+      </div>
+
+      <!-- Right Pane: Completed Assignments -->
+      <div class="right-pane">
+        <h2 align="center" style="color: blue">COMPLETED ASSIGNMENTS:</h2>
+        <ul id="completedList"></ul>
+      </div>
     </div>
   </div>
 
@@ -57,10 +92,19 @@
     const assignmentList = document.getElementById('assignmentList');
     const completedList = document.getElementById('completedList');
     const form = document.getElementById('studyForm');
+    const loginForm = document.getElementById('loginForm');
+    const signupForm = document.getElementById('signupForm');
+    const signupContainer = document.getElementById('signupContainer');
+    const loginContainer = document.getElementById('loginContainer');
+    const assignmentTracker = document.getElementById('assignmentTracker');
+    const signupLink = document.getElementById('signupLink');
     
-    // Get assignments from localStorage or initialize an empty array
+    // Get assignments and completed studies from localStorage or initialize empty arrays
     let assignments = JSON.parse(localStorage.getItem('assignments')) || [];
     let completedAssignments = JSON.parse(localStorage.getItem('completedAssignments')) || [];
+    let loggedIn = localStorage.getItem('loggedIn') === 'true';
+    let storedUsername = localStorage.getItem('username');
+    let storedPassword = localStorage.getItem('password');
 
     // Add delays for modes (in days)
     const modeDelays = {
@@ -161,31 +205,64 @@
       localStorage.setItem('completedAssignments', JSON.stringify(completedAssignments));
     }
 
-    // Form submission event handler to add new study
-    form.addEventListener('submit', function (event) {
+    // Show the signup form if user clicks on signup link
+    signupLink.addEventListener('click', function(event) {
       event.preventDefault();
-      const study = document.getElementById('study').value;
-      const mode = document.getElementById('mode').value;
-
-      const showDate = calculateFutureDate(modeDelays[mode]);
-
-      // Add new assignment
-      assignments.push({
-        study,
-        mode,
-        showDate: showDate
-      });
-
-      saveAssignments();
-      displayAssignments();
-
-      // Reset the form
-      form.reset();
+      loginContainer.classList.add('hidden');
+      signupContainer.classList.remove('hidden');
     });
 
-    // Display assignments and completed studies on page load
-    displayAssignments();
-    displayCompletedAssignments();
+    // Signup form submission event handler
+    signupForm.addEventListener('submit', function(event) {
+      event.preventDefault();
+      const newUsername = document.getElementById('signupUsername').value;
+      const newPassword = document.getElementById('signupPassword').value;
+
+      // Store the new username and password in localStorage
+      localStorage.setItem('username', newUsername);
+      localStorage.setItem('password', newPassword);
+
+      alert('Signup successful! You can now log in.');
+
+      // Redirect to login
+      signupContainer.classList.add('hidden');
+      loginContainer.classList.remove('hidden');
+    });
+
+    // Login form submission event handler
+    loginForm.addEventListener('submit', function(event) {
+      event.preventDefault();
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+
+      // Retrieve credentials from localStorage
+      storedUsername = localStorage.getItem('username');
+      storedPassword = localStorage.getItem('password');
+
+      // Check if entered credentials match the stored ones
+      if (username === storedUsername && password === storedPassword) {
+        localStorage.setItem('loggedIn', 'true');
+        loginContainer.classList.add('hidden');
+        assignmentTracker.classList.remove('hidden');
+        displayAssignments();
+        displayCompletedAssignments();
+      } else {
+        alert('Invalid credentials. Please try again.');
+      }
+    });
+
+    // Function to check login status and display appropriate content
+    function checkLoginStatus() {
+      if (loggedIn) {
+        loginContainer.classList.add('hidden');
+        assignmentTracker.classList.remove('hidden');
+        displayAssignments();
+        displayCompletedAssignments();
+      }
+    }
+
+    // Check login status on page load
+    checkLoginStatus();
   </script>
 </body>
 </html>

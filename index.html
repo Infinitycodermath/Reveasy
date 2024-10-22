@@ -294,35 +294,32 @@
     }
 
     checkLoginStatus();
+
     // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-  import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+    import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
 
-  // Your web app's Firebase configuration
-  const firebaseConfig = {
-    apiKey: "AIzaSyBB724_ZLmaP_4jqsu6XMfjLSB25zu7cSQ",
-    authDomain: "reveasy-9f9f8.firebaseapp.com",
-    projectId: "reveasy-9f9f8",
-    storageBucket: "reveasy-9f9f8.appspot.com",
-    messagingSenderId: "336514662586",
-    appId: "1:336514662586:web:c03ff8d7f68178f2cd8283"
-  };
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBB724_ZLmaP_4jqsu6XMfjLSB25zu7cSQ",
+      authDomain: "reveasy-9f9f8.firebaseapp.com",
+      projectId: "reveasy-9f9f8",
+      storageBucket: "reveasy-9f9f8.appspot.com",
+      messagingSenderId: "336514662586",
+      appId: "1:336514662586:web:c03ff8d7f68178f2cd8283"
+    };
 
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-document.getElementById("submit").addEventListener('click', function(e)){
-  set(ref(db, 'user/' + document.getElementById("username").value),{
 
-    username : document.getElementById("username").value,
-    password : document.getElementById("password").value,
-    
-  })
-
-  
-}
+    // Store user details in Firebase
+    document.getElementById("submit").addEventListener('click', function(e) {
+      set(ref(db, 'user/' + document.getElementById("username").value), {
+        username: document.getElementById("username").value,
+        password: document.getElementById("password").value
+      });
+    });
   </script>
 </body>
 </html>

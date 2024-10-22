@@ -19,14 +19,15 @@
     <input type="text" id="study" name="study" required>
 
     <label for="mode">Mode (S, R, P, US, UR, UP, N):</label>
-    <input type="text" id="mode" name="mode" pattern="[S,R,P,US,UR,UP,N]" required>
+    <input type="text" id="mode" name="mode" pattern="[SRPUSURUPN]" required>
 <script>
-    const select = document.createElement('select');
+   const select = document.createElement('select');
           ['S', 'R', 'P', 'US', 'UR', 'UP', 'N'].forEach(option => {
             const opt = document.createElement('option');
             opt.value = option;
             opt.textContent = option;
             select.appendChild(opt);
+          });
 </script>
 
     <button type="submit">Add Study</button>

@@ -32,6 +32,11 @@
       font-weight: bold;
       cursor: pointer;
     }
+    .pending-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
   </style>
 </head>
 <body>
@@ -87,7 +92,13 @@
             <option value="N">N</option>
           </select>
 
-          <!-- New Selector -->
+          <button type="submit">Add Study</button>
+        </form>
+
+        <!-- Upcoming and Pending Assignments with New Dropdown -->
+        <div class="pending-header">
+          <h2 align="center" style="color: green">UPCOMING AND PENDING ASSIGNMENTS:</h2>
+          <!-- New Dropdown beside Pending Assignments -->
           <label for="extraMode">Extra Mode:</label>
           <select id="extraMode" name="extraMode" required>
             <option value="S">S</option>
@@ -98,11 +109,8 @@
             <option value="UP">UP</option>
             <option value="N">N</option>
           </select>
+        </div>
 
-          <button type="submit">Add Study</button>
-        </form>
-
-        <h2 align="center" style="color: green">UPCOMING AND PENDING ASSIGNMENTS:</h2>
         <ul id="assignmentList"></ul>
       </div>
 
@@ -239,7 +247,6 @@
         .then(() => {
           loginContainer.classList.add('hidden');
           assignmentTracker.classList.remove('hidden');
-          loadAssignments();
         })
         .catch((error) => {
           alert(error.message);

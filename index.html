@@ -87,6 +87,18 @@
             <option value="N">N</option>
           </select>
 
+          <!-- New Selector -->
+          <label for="extraMode">Extra Mode:</label>
+          <select id="extraMode" name="extraMode" required>
+            <option value="S">S</option>
+            <option value="R">R</option>
+            <option value="P">P</option>
+            <option value="US">US</option>
+            <option value="UR">UR</option>
+            <option value="UP">UP</option>
+            <option value="N">N</option>
+          </select>
+
           <button type="submit">Add Study</button>
         </form>
 
@@ -110,16 +122,14 @@
 
     // Firebase Configuration
     const firebaseConfig = {
-  apiKey: "AIzaSyBB724_ZLmaP_4jqsu6XMfjLSB25zu7cSQ",
-  authDomain: "reveasy-9f9f8.firebaseapp.com",
-  databaseURL: "https://reveasy-9f9f8-default-rtdb.firebaseio.com",
-  projectId: "reveasy-9f9f8",
-  storageBucket: "reveasy-9f9f8.appspot.com",
-  messagingSenderId: "336514662586",
-  appId: "1:336514662586:web:c03ff8d7f68178f2cd8283"
-};
-
-
+      apiKey: "your-api-key",
+      authDomain: "your-auth-domain",
+      databaseURL: "your-database-url",
+      projectId: "your-project-id",
+      storageBucket: "your-storage-bucket",
+      messagingSenderId: "your-messaging-sender-id",
+      appId: "your-app-id"
+    };
 
     // Initialize Firebase App
     const app = initializeApp(firebaseConfig);
@@ -138,11 +148,9 @@
     const signupLink = document.getElementById('signupLink');
     const logoutBtn = document.getElementById('logoutBtn');
 
-    // Store assignments and completed assignments
     let assignments = [];
     let completedAssignments = [];
 
-    // Add delays for modes (in days)
     const modeDelays = {
       S: 3,
       R: 5,
@@ -153,14 +161,12 @@
       N: 0
     };
 
-    // Function to calculate future date
     function calculateFutureDate(days) {
       const currentDate = new Date();
       currentDate.setDate(currentDate.getDate() + days);
       return currentDate;
     }
 
-    // Display Assignments
     function displayAssignments() {
       assignmentList.innerHTML = '';
       assignments.forEach((assignment) => {
@@ -192,7 +198,6 @@
       });
     }
 
-    // Display Completed Assignments
     function displayCompletedAssignments() {
       completedList.innerHTML = '';
       completedAssignments.forEach((assignment) => {
@@ -203,21 +208,19 @@
       });
     }
 
-    // Save assignments to Firebase Database
     function saveAssignmentsToDB() {
       const userId = auth.currentUser.uid;
       set(ref(db, 'users/' + userId + '/assignments'), assignments);
       set(ref(db, 'users/' + userId + '/completedAssignments'), completedAssignments);
     }
 
-    // Handle Signup
     signupForm.addEventListener('submit', (event) => {
       event.preventDefault();
       const email = document.getElementById('signupEmail').value;
       const password = document.getElementById('signupPassword').value;
 
       createUserWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
+        .then(() => {
           alert('Signup successful!');
           signupContainer.classList.add('hidden');
           assignmentTracker.classList.remove('hidden');
@@ -227,15 +230,13 @@
         });
     });
 
-    // Handle Login
     loginForm.addEventListener('submit', (event) => {
       event.preventDefault();
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
 
       signInWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
-          // User logged in
+        .then(() => {
           loginContainer.classList.add('hidden');
           assignmentTracker.classList.remove('hidden');
           loadAssignments();
@@ -245,7 +246,6 @@
         });
     });
 
-    // Load Assignments from Firebase
     function loadAssignments() {
       const userId = auth.currentUser.uid;
       const assignmentsRef = ref(db, 'users/' + userId + '/assignments');
@@ -262,59 +262,45 @@
       });
     }
 
-    // Add New Study
     studyForm.addEventListener('submit', (event) => {
       event.preventDefault();
       const study = document.getElementById('study').value;
       const mode = document.getElementById('mode').value;
-      const showDate = calculateFutureDate(modeDelays[mode]);
+      const showDate = mode === 'N' ? new Date() : calculateFutureDate(modeDelays[mode]);
 
-      // Add new assignment
       assignments.push({
         study,
         mode,
-        showDate: mode === 'N' ? new Date() : showDate // Show immediately for mode 'N'
+        showDate
       });
 
       saveAssignmentsToDB();
       displayAssignments();
     });
 
-    // Logout Functionality
     logoutBtn.addEventListener('click', () => {
       signOut(auth).then(() => {
-        // Signed out
         location.reload();
       }).catch((error) => {
         alert(error.message);
       });
     });
 
-    // Handle Auth State Changes
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        // User is signed in
         loginContainer.classList.add('hidden');
         assignmentTracker.classList.remove('hidden');
         loadAssignments();
       } else {
-        // No user is signed in
         loginContainer.classList.remove('hidden');
         assignmentTracker.classList.add('hidden');
       }
     });
 
-    // Link to Signup
     signupLink.addEventListener('click', () => {
       loginContainer.classList.add('hidden');
       signupContainer.classList.remove('hidden');
     });
-//invalid date issue resolving
-
- 
-
-    
-
   </script>
 </body>
 </html>

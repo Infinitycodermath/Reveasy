@@ -95,22 +95,8 @@
           <button type="submit">Add Study</button>
         </form>
 
-        <!-- Upcoming and Pending Assignments with New Dropdown -->
-        <div class="pending-header">
-          <h2 align="center" style="color: green">UPCOMING AND PENDING ASSIGNMENTS:</h2>
-          <!-- New Dropdown beside Pending Assignments -->
-          <label for="extraMode">Extra Mode:</label>
-          <select id="extraMode" name="extraMode" required>
-            <option value="S">S</option>
-            <option value="R">R</option>
-            <option value="P">P</option>
-            <option value="US">US</option>
-            <option value="UR">UR</option>
-            <option value="UP">UP</option>
-            <option value="N">N</option>
-          </select>
-        </div>
-
+        <!-- Pending Assignments -->
+        <h2 align="center" style="color: green">UPCOMING AND PENDING ASSIGNMENTS:</h2>
         <ul id="assignmentList"></ul>
       </div>
 
@@ -129,7 +115,7 @@
     import { getDatabase, ref, set, push, onValue } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
 
     // Firebase Configuration
-    const firebaseConfig = {
+  const firebaseConfig = {
   apiKey: "AIzaSyBB724_ZLmaP_4jqsu6XMfjLSB25zu7cSQ",
   authDomain: "reveasy-9f9f8.firebaseapp.com",
   databaseURL: "https://reveasy-9f9f8-default-rtdb.firebaseio.com",
@@ -179,7 +165,19 @@
       assignmentList.innerHTML = '';
       assignments.forEach((assignment) => {
         const li = document.createElement('li');
-        li.textContent = `${assignment.study} - Due: ${new Date(assignment.showDate).toDateString()}`;
+        li.textContent = `${assignment.study} - Due: ${assignment.showDate ? new Date(assignment.showDate).toDateString() : "Today"}`;
+
+        const dropdown = document.createElement('select');
+        dropdown.innerHTML = `
+          <option value="S">S</option>
+          <option value="R">R</option>
+          <option value="P">P</option>
+          <option value="US">US</option>
+          <option value="UR">UR</option>
+          <option value="UP">UP</option>
+          <option value="N">N</option>
+        `;
+        dropdown.value = assignment.mode;
 
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
@@ -189,6 +187,12 @@
 
         deferButton.addEventListener('click', function () {
           if (checkbox.checked) {
+            // Update mode based on dropdown selection and shift due date accordingly
+            const selectedMode = dropdown.value;
+            const daysDelay = modeDelays[selectedMode];
+            assignment.showDate = calculateFutureDate(daysDelay);
+
+            // Move to completed list
             completedAssignments.push(assignment);
             assignments = assignments.filter(a => a !== assignment);
 
@@ -200,6 +204,7 @@
           }
         });
 
+        li.appendChild(dropdown);
         li.appendChild(checkbox);
         li.appendChild(deferButton);
         assignmentList.appendChild(li);
@@ -228,9 +233,8 @@
       const password = document.getElementById('signupPassword').value;
 
       createUserWithEmailAndPassword(auth, email, password)
-        .then(() => {
-          alert('Signup successful!');
-          signupContainer.classList.add('hidden');
+        .then((userCredential) => {
+          const user = userCredential.user;
           assignmentTracker.classList.remove('hidden');
         })
         .catch((error) => {
@@ -244,8 +248,8 @@
       const password = document.getElementById('password').value;
 
       signInWithEmailAndPassword(auth, email, password)
-        .then(() => {
-          loginContainer.classList.add('hidden');
+        .then((userCredential) => {
+          const user = userCredential.user;
           assignmentTracker.classList.remove('hidden');
         })
         .catch((error) => {

@@ -160,66 +160,113 @@
       currentDate.setDate(currentDate.getDate() + days);
       return currentDate;
     }
+function displayAssignments() {
+  assignmentList.innerHTML = ''; // Clear the list
+  const today = new Date(); // Get today's date
 
-    function displayAssignments() {
-      assignmentList.innerHTML = '';
-      assignments.forEach((assignment) => {
-        const li = document.createElement('li');
-        li.textContent = `${assignment.study} - Due: ${assignment.showDate ? new Date(assignment.showDate).toDateString() : "Today"}`;
+  assignments.forEach((assignment) => {
+    const li = document.createElement('li');
 
-        const dropdown = document.createElement('select');
-        dropdown.innerHTML = `
-          <option value="S">S</option>
-          <option value="R">R</option>
-          <option value="P">P</option>
-          <option value="US">US</option>
-          <option value="UR">UR</option>
-          <option value="UP">UP</option>
-          <option value="N">N</option>
-        `;
-        dropdown.value = assignment.mode;
+    // Get assignment due date and format it
+    const assignmentDate = new Date(assignment.showDate);
+    const isToday = assignmentDate.toDateString() === today.toDateString(); // Check if due date is today
 
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
+    const displayDate = isToday ? "Today" : assignmentDate.toDateString(); // Show "Today" if due date is today
 
-        const deferButton = document.createElement('button');
-        deferButton.textContent = "Completed";
+    li.textContent = `${assignment.study} - Due: ${displayDate}`;
 
-        deferButton.addEventListener('click', function () {
-          if (checkbox.checked) {
-            // Update mode based on dropdown selection and shift due date accordingly
-            const selectedMode = dropdown.value;
-            const daysDelay = modeDelays[selectedMode];
-            assignment.showDate = calculateFutureDate(daysDelay);
+    // Create dropdown for mode selection
+    const dropdown = document.createElement('select');
+    dropdown.innerHTML = `
+      <option value="S">S</option>
+      <option value="R">R</option>
+      <option value="P">P</option>
+      <option value="US">US</option>
+      <option value="UR">UR</option>
+      <option value="UP">UP</option>
+      <option value="N">N</option>
+    `;
+    dropdown.value = assignment.mode; // Set the current mode for the assignment
 
-            // Move to completed list
-            completedAssignments.push(assignment);
-            assignments = assignments.filter(a => a !== assignment);
+    // Create checkbox for marking assignment as complete
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
 
-            saveAssignmentsToDB();
-            displayAssignments();
-            displayCompletedAssignments();
-          } else {
-            alert('Please check the checkbox before marking the assignment as completed.');
-          }
-        });
+    // Create button for completing the assignment
+    const deferButton = document.createElement('button');
+    deferButton.textContent = "Completed";
 
-        li.appendChild(dropdown);
-        li.appendChild(checkbox);
-        li.appendChild(deferButton);
-        assignmentList.appendChild(li);
-      });
-    }
+    // Add event listener for completion
+    deferButton.addEventListener('click', function () {
+      if (checkbox.checked) {
+        // Update mode based on dropdown selection
+        const selectedMode = dropdown.value;
+        const daysDelay = modeDelays[selectedMode]; // Get the delay for the selected mode
 
-    function displayCompletedAssignments() {
-      completedList.innerHTML = '';
-      completedAssignments.forEach((assignment) => {
-        const li = document.createElement('li');
-        li.classList.add('striked');
-        li.textContent = `${assignment.study} - Completed on: ${new Date().toDateString()}`;
-        completedList.appendChild(li);
-      });
-    }
+        // Recalculate the due date based on the selected mode
+        assignment.showDate = calculateFutureDate(daysDelay);
+
+        // Move to completed list
+        completedAssignments.push(assignment);
+        assignments = assignments.filter(a => a !== assignment); // Remove from pending
+
+        saveAssignmentsToDB();
+        displayAssignments(); // Refresh pending assignments
+        displayCompletedAssignments(); // Refresh completed assignments
+      } else {
+        alert('Please check the checkbox before marking the assignment as completed.');
+      }
+    });
+
+    li.appendChild(dropdown); // Add dropdown to the assignment
+    li.appendChild(checkbox); // Add checkbox to the assignment
+    li.appendChild(deferButton); // Add "Completed" button to the assignment
+    assignmentList.appendChild(li); // Add the assignment to the list
+  });
+}
+
+function displayCompletedAssignments() {
+  completedList.innerHTML = ''; // Clear completed list
+
+  completedAssignments.forEach((assignment) => {
+    const li = document.createElement('li');
+    const completedDate = new Date().toDateString();
+
+    li.textContent = `${assignment.study} - Completed on: ${completedDate}`;
+
+    // Create a button to restore the completed assignment back to pending
+    const restoreButton = document.createElement('button');
+    restoreButton.textContent = "Restore";
+
+    // Add event listener for restore
+    restoreButton.addEventListener('click', function () {
+      // Move the assignment back to pending
+      assignments.push(assignment);
+      completedAssignments = completedAssignments.filter(a => a !== assignment); // Remove from completed list
+
+      saveAssignmentsToDB();
+      displayAssignments(); // Refresh pending assignments
+      displayCompletedAssignments(); // Refresh completed assignments
+    });
+
+    li.appendChild(restoreButton); // Add the restore button to the completed assignment
+    completedList.appendChild(li); // Add the assignment to the completed list
+  });
+}
+
+// Function to calculate the future date based on mode delays
+function calculateFutureDate(days) {
+  const currentDate = new Date();
+  currentDate.setDate(currentDate.getDate() + days); // Add the delay to today's date
+  return currentDate;
+}
+
+// Save assignments and completed assignments to the database
+function saveAssignmentsToDB() {
+  const userId = auth.currentUser.uid;
+  set(ref(db, 'users/' + userId + '/assignments'), assignments);
+  set(ref(db, 'users/' + userId + '/completedAssignments'), completedAssignments);
+}
 
     function saveAssignmentsToDB() {
       const userId = auth.currentUser.uid;

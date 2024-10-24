@@ -108,257 +108,242 @@
     </div>
   </div>
 
-  <script type="module">
-    // Import Firebase SDK
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-    import { getDatabase, ref, set, push, onValue } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+<script type="module">
+  // Import Firebase SDK
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+  import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
 
-    // Firebase Configuration
+  // Firebase Configuration
   const firebaseConfig = {
-  apiKey: "AIzaSyBB724_ZLmaP_4jqsu6XMfjLSB25zu7cSQ",
-  authDomain: "reveasy-9f9f8.firebaseapp.com",
-  databaseURL: "https://reveasy-9f9f8-default-rtdb.firebaseio.com",
-  projectId: "reveasy-9f9f8",
-  storageBucket: "reveasy-9f9f8.appspot.com",
-  messagingSenderId: "336514662586",
-  appId: "1:336514662586:web:c03ff8d7f68178f2cd8283"
-};
+    apiKey: "AIzaSyBB724_ZLmaP_4jqsu6XMfjLSB25zu7cSQ",
+    authDomain: "reveasy-9f9f8.firebaseapp.com",
+    databaseURL: "https://reveasy-9f9f8-default-rtdb.firebaseio.com",
+    projectId: "reveasy-9f9f8",
+    storageBucket: "reveasy-9f9f8.appspot.com",
+    messagingSenderId: "336514662586",
+    appId: "1:336514662586:web:c03ff8d7f68178f2cd8283"
+  };
 
-    // Initialize Firebase App
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getDatabase(app);
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getDatabase(app);
 
-    // DOM Elements
-    const signupForm = document.getElementById('signupForm');
-    const loginForm = document.getElementById('loginForm');
-    const studyForm = document.getElementById('studyForm');
-    const signupContainer = document.getElementById('signupContainer');
-    const loginContainer = document.getElementById('loginContainer');
-    const assignmentTracker = document.getElementById('assignmentTracker');
-    const assignmentList = document.getElementById('assignmentList');
-    const completedList = document.getElementById('completedList');
-    const signupLink = document.getElementById('signupLink');
-    const logoutBtn = document.getElementById('logoutBtn');
+  // DOM Elements
+  const signupForm = document.getElementById('signupForm');
+  const loginForm = document.getElementById('loginForm');
+  const studyForm = document.getElementById('studyForm');
+  const signupContainer = document.getElementById('signupContainer');
+  const loginContainer = document.getElementById('loginContainer');
+  const assignmentTracker = document.getElementById('assignmentTracker');
+  const assignmentList = document.getElementById('assignmentList');
+  const completedList = document.getElementById('completedList');
+  const signupLink = document.getElementById('signupLink');
+  const logoutBtn = document.getElementById('logoutBtn');
 
-    let assignments = [];
-    let completedAssignments = [];
+  let assignments = [];
+  let completedAssignments = [];
 
-    const modeDelays = {
-      S: 3,
-      R: 5,
-      P: 7,
-      US: 13,
-      UR: 15,
-      UP: 17,
-      N: 0
-    };
+  const modeDelays = {
+    S: 3,
+    R: 5,
+    P: 7,
+    US: 13,
+    UR: 15,
+    UP: 17,
+    N: 0
+  };
 
-    function calculateFutureDate(days) {
-      const currentDate = new Date();
-      currentDate.setDate(currentDate.getDate() + days);
-      return currentDate;
-    }
-function displayAssignments() {
-  assignmentList.innerHTML = ''; // Clear the list
-  const today = new Date(); // Get today's date
+  function calculateFutureDate(days) {
+    const currentDate = new Date();
+    currentDate.setDate(currentDate.getDate() + days);
+    return currentDate;
+  }
 
-  assignments.forEach((assignment) => {
-    const li = document.createElement('li');
+  function displayAssignments() {
+    assignmentList.innerHTML = ''; // Clear the list
+    const today = new Date(); // Get today's date
 
-    // Get assignment due date and format it
-    const assignmentDate = new Date(assignment.showDate);
-    const isToday = assignmentDate.toDateString() === today.toDateString(); // Check if due date is today
+    assignments.forEach((assignment) => {
+      const li = document.createElement('li');
 
-    const displayDate = isToday ? "Today" : assignmentDate.toDateString(); // Show "Today" if due date is today
+      // Get assignment due date and format it
+      const assignmentDate = new Date(assignment.showDate);
+      const isToday = assignmentDate.toDateString() === today.toDateString(); // Check if due date is today
 
-    li.textContent = `${assignment.study} - Due: ${displayDate}`;
+      const displayDate = isToday ? "Today" : assignmentDate.toDateString(); // Show "Today" if due date is today
 
-    // Create dropdown for mode selection
-    const dropdown = document.createElement('select');
-    dropdown.innerHTML = `
-      <option value="S">S</option>
-      <option value="R">R</option>
-      <option value="P">P</option>
-      <option value="US">US</option>
-      <option value="UR">UR</option>
-      <option value="UP">UP</option>
-      <option value="N">N</option>
-    `;
-    dropdown.value = assignment.mode; // Set the current mode for the assignment
+      li.textContent = `${assignment.study} - Due: ${displayDate}`;
 
-    // Create checkbox for marking assignment as complete
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
+      // Create dropdown for mode selection
+      const dropdown = document.createElement('select');
+      dropdown.innerHTML = `
+        <option value="S">S</option>
+        <option value="R">R</option>
+        <option value="P">P</option>
+        <option value="US">US</option>
+        <option value="UR">UR</option>
+        <option value="UP">UP</option>
+        <option value="N">N</option>
+      `;
+      dropdown.value = assignment.mode; // Set the current mode for the assignment
 
-    // Create button for completing the assignment
-    const deferButton = document.createElement('button');
-    deferButton.textContent = "Completed";
+      // Create checkbox for marking assignment as complete
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
 
-    // Add event listener for completion
-    deferButton.addEventListener('click', function () {
-      if (checkbox.checked) {
-        // Update mode based on dropdown selection
-        const selectedMode = dropdown.value;
-        const daysDelay = modeDelays[selectedMode]; // Get the delay for the selected mode
+      // Create button for completing the assignment
+      const deferButton = document.createElement('button');
+      deferButton.textContent = "Completed";
 
-        // Recalculate the due date based on the selected mode
-        assignment.showDate = calculateFutureDate(daysDelay);
+      // Add event listener for completion
+      deferButton.addEventListener('click', function () {
+        if (checkbox.checked) {
+          // Update mode based on dropdown selection
+          const selectedMode = dropdown.value;
+          const daysDelay = modeDelays[selectedMode]; // Get the delay for the selected mode
 
-        // Move to completed list
-        completedAssignments.push(assignment);
-        assignments = assignments.filter(a => a !== assignment); // Remove from pending
+          // Recalculate the due date based on the selected mode
+          assignment.showDate = calculateFutureDate(daysDelay);
+
+          // Move to completed list
+          completedAssignments.push(assignment);
+          assignments = assignments.filter(a => a !== assignment); // Remove from pending
+
+          saveAssignmentsToDB();
+          displayAssignments(); // Refresh pending assignments
+          displayCompletedAssignments(); // Refresh completed assignments
+        } else {
+          alert('Please check the checkbox before marking the assignment as completed.');
+        }
+      });
+
+      li.appendChild(dropdown); // Add dropdown to the assignment
+      li.appendChild(checkbox); // Add checkbox to the assignment
+      li.appendChild(deferButton); // Add "Completed" button to the assignment
+      assignmentList.appendChild(li); // Add the assignment to the list
+    });
+  }
+
+  function displayCompletedAssignments() {
+    completedList.innerHTML = ''; // Clear completed list
+
+    completedAssignments.forEach((assignment) => {
+      const li = document.createElement('li');
+      const completedDate = new Date().toDateString();
+
+      li.textContent = `${assignment.study} - Completed on: ${completedDate}`;
+
+      // Create a button to restore the completed assignment back to pending
+      const restoreButton = document.createElement('button');
+      restoreButton.textContent = "Restore";
+
+      // Add event listener for restore
+      restoreButton.addEventListener('click', function () {
+        // Move the assignment back to pending
+        assignments.push(assignment);
+        completedAssignments = completedAssignments.filter(a => a !== assignment); // Remove from completed list
 
         saveAssignmentsToDB();
         displayAssignments(); // Refresh pending assignments
         displayCompletedAssignments(); // Refresh completed assignments
-      } else {
-        alert('Please check the checkbox before marking the assignment as completed.');
-      }
-    });
+      });
 
-    li.appendChild(dropdown); // Add dropdown to the assignment
-    li.appendChild(checkbox); // Add checkbox to the assignment
-    li.appendChild(deferButton); // Add "Completed" button to the assignment
-    assignmentList.appendChild(li); // Add the assignment to the list
+      li.appendChild(restoreButton); // Add the restore button to the completed assignment
+      completedList.appendChild(li); // Add the assignment to the completed list
+    });
+  }
+
+  // Save assignments and completed assignments to the database
+  function saveAssignmentsToDB() {
+    const userId = auth.currentUser.uid;
+    set(ref(db, 'users/' + userId + '/assignments'), assignments);
+    set(ref(db, 'users/' + userId + '/completedAssignments'), completedAssignments);
+  }
+
+  signupForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const email = document.getElementById('signupEmail').value;
+    const password = document.getElementById('signupPassword').value;
+
+    createUserWithEmailAndPassword(auth, email, password)
+      .then((userCredential) => {
+        const user = userCredential.user;
+        // Wait for the auth state to change before showing the assignment tracker
+      })
+      .catch((error) => {
+        alert(error.message);
+      });
   });
-}
 
-function displayCompletedAssignments() {
-  completedList.innerHTML = ''; // Clear completed list
+  loginForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
 
-  completedAssignments.forEach((assignment) => {
-    const li = document.createElement('li');
-    const completedDate = new Date().toDateString();
-
-    li.textContent = `${assignment.study} - Completed on: ${completedDate}`;
-
-    // Create a button to restore the completed assignment back to pending
-    const restoreButton = document.createElement('button');
-    restoreButton.textContent = "Restore";
-
-    // Add event listener for restore
-    restoreButton.addEventListener('click', function () {
-      // Move the assignment back to pending
-      assignments.push(assignment);
-      completedAssignments = completedAssignments.filter(a => a !== assignment); // Remove from completed list
-
-      saveAssignmentsToDB();
-      displayAssignments(); // Refresh pending assignments
-      displayCompletedAssignments(); // Refresh completed assignments
-    });
-
-    li.appendChild(restoreButton); // Add the restore button to the completed assignment
-    completedList.appendChild(li); // Add the assignment to the completed list
+    signInWithEmailAndPassword(auth, email, password)
+      .then((userCredential) => {
+        const user = userCredential.user;
+        // Wait for the auth state to change before showing the assignment tracker
+      })
+      .catch((error) => {
+        alert(error.message);
+      });
   });
-}
 
-// Function to calculate the future date based on mode delays
-function calculateFutureDate(days) {
-  const currentDate = new Date();
-  currentDate.setDate(currentDate.getDate() + days); // Add the delay to today's date
-  return currentDate;
-}
+  function loadAssignments() {
+    const userId = auth.currentUser.uid;
+    const assignmentsRef = ref(db, 'users/' + userId + '/assignments');
+    const completedAssignmentsRef = ref(db, 'users/' + userId + '/completedAssignments');
 
-// Save assignments and completed assignments to the database
-function saveAssignmentsToDB() {
-  const userId = auth.currentUser.uid;
-  set(ref(db, 'users/' + userId + '/assignments'), assignments);
-  set(ref(db, 'users/' + userId + '/completedAssignments'), completedAssignments);
-}
-
-    function saveAssignmentsToDB() {
-      const userId = auth.currentUser.uid;
-      set(ref(db, 'users/' + userId + '/assignments'), assignments);
-      set(ref(db, 'users/' + userId + '/completedAssignments'), completedAssignments);
-    }
-
-    signupForm.addEventListener('submit', (event) => {
-      event.preventDefault();
-      const email = document.getElementById('signupEmail').value;
-      const password = document.getElementById('signupPassword').value;
-
-      createUserWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
-          const user = userCredential.user;
-          assignmentTracker.classList.remove('hidden');
-        })
-        .catch((error) => {
-          alert(error.message);
-        });
-    });
-
-    loginForm.addEventListener('submit', (event) => {
-      event.preventDefault();
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-
-      signInWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
-          const user = userCredential.user;
-          assignmentTracker.classList.remove('hidden');
-        })
-        .catch((error) => {
-          alert(error.message);
-        });
-    });
-
-    function loadAssignments() {
-      const userId = auth.currentUser.uid;
-      const assignmentsRef = ref(db, 'users/' + userId + '/assignments');
-      const completedAssignmentsRef = ref(db, 'users/' + userId + '/completedAssignments');
-
-      onValue(assignmentsRef, (snapshot) => {
-        assignments = snapshot.val() || [];
-        displayAssignments();
-      });
-
-      onValue(completedAssignmentsRef, (snapshot) => {
-        completedAssignments = snapshot.val() || [];
-        displayCompletedAssignments();
-      });
-    }
-
-    studyForm.addEventListener('submit', (event) => {
-      event.preventDefault();
-      const study = document.getElementById('study').value;
-      const mode = document.getElementById('mode').value;
-      const showDate = mode === 'N' ? new Date() : calculateFutureDate(modeDelays[mode]);
-
-      assignments.push({
-        study,
-        mode,
-        showDate
-      });
-
-      saveAssignmentsToDB();
+    onValue(assignmentsRef, (snapshot) => {
+      assignments = snapshot.val() || [];
       displayAssignments();
     });
 
-    logoutBtn.addEventListener('click', () => {
-      signOut(auth).then(() => {
-        location.reload();
-      }).catch((error) => {
-        alert(error.message);
-      });
+    onValue(completedAssignmentsRef, (snapshot) => {
+      completedAssignments = snapshot.val() || [];
+      displayCompletedAssignments();
+    });
+  }
+
+  studyForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const study = document.getElementById('study').value;
+    const mode = document.getElementById('mode').value;
+    const showDate = mode === 'N' ? new Date() : calculateFutureDate(modeDelays[mode]);
+
+    assignments.push({
+      study,
+      mode,
+      showDate
     });
 
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        loginContainer.classList.add('hidden');
-        assignmentTracker.classList.remove('hidden');
-        loadAssignments();
-      } else {
-        loginContainer.classList.remove('hidden');
-        assignmentTracker.classList.add('hidden');
-      }
-    });
+    saveAssignmentsToDB();
+    displayAssignments();
+  });
 
-    signupLink.addEventListener('click', () => {
+  logoutBtn.addEventListener('click', () => {
+    signOut(auth).then(() => {
+      location.reload();
+    }).catch((error) => {
+      alert(error.message);
+    });
+  });
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
       loginContainer.classList.add('hidden');
-      signupContainer.classList.remove('hidden');
-    });
-  </script>
+      assignmentTracker.classList.remove('hidden');
+      loadAssignments();
+    } else {
+      loginContainer.classList.remove('hidden');
+      assignmentTracker.classList.add('hidden');
+    }
+  });
+
+</script>
+
 </body>
 </html>

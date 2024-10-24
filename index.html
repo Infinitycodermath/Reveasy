@@ -46,7 +46,7 @@
     <form id="signupForm">
       <label for="signupEmail">New Email:</label>
       <input type="email" id="signupEmail" name="signupEmail" required>
-      
+      <br>
       <label for="signupPassword">New Password:</label>
       <input type="password" id="signupPassword" name="signupPassword" required>
       
@@ -60,12 +60,13 @@
     <form id="loginForm">
       <label for="email">Email:</label>
       <input type="email" id="email" name="email" required>
-      
+      <br>
       <label for="password">Password:</label>
       <input type="password" id="password" name="password" required>
-      
+      <br>
       <button type="submit">Login</button>
     </form>
+    <br>
     <p>Don't have an account? <a href="#" id="signupLink">Sign up here</a></p>
   </div>
 
@@ -161,32 +162,31 @@
     return currentDate;
   }
 
-  function displayAssignments() {
-    assignmentList.innerHTML = ''; // Clear the list
-    const today = new Date(); // Get today's date
+ function displayAssignments() {
+      assignmentList.innerHTML = ''; // Clear current list
 
-    assignments.forEach((assignment) => {
-      const li = document.createElement('li');
+      assignments.forEach((assignment, index) => {
+        const assignmentDate = new Date(assignment.showDate);
+        const today = new Date();
 
-      // Get assignment due date and format it
-      const assignmentDate = new Date(assignment.showDate);
-      const isToday = assignmentDate.toDateString() === today.toDateString(); // Check if due date is today
+        // Only show assignments if the show date is past or today
+        if (assignmentDate <= today) {
+          const li = document.createElement('li');
+          li.textContent = `${assignment.study} - Due: ${showDate.toDateString()}`;
 
-      const displayDate = isToday ? "Today" : assignmentDate.toDateString(); // Show "Today" if due date is today
+          // Add checkbox for marking the assignment
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
 
-      li.textContent = `${assignment.study} - Due: ${displayDate}`;
+          // Add select box for changing the mode
+          const dropdown = document.createElement('select');
+          ['S', 'R', 'P', 'US', 'UR', 'UP', 'N'].forEach(option => {
+            const opt = document.createElement('option');
+            opt.value = option;
+            opt.textContent = option;
+            select.appendChild(opt);
+          });
 
-      // Create dropdown for mode selection
-      const dropdown = document.createElement('select');
-      dropdown.innerHTML = `
-        <option value="S">S</option>
-        <option value="R">R</option>
-        <option value="P">P</option>
-        <option value="US">US</option>
-        <option value="UR">UR</option>
-        <option value="UP">UP</option>
-        <option value="N">N</option>
-      `;
       dropdown.value = assignment.mode; // Set the current mode for the assignment
 
       // Create checkbox for marking assignment as complete

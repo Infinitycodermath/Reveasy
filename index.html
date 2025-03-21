@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Study Tracker</h1>
+        <form id="studyForm">
+            <label for="studyName">Study Name:</label>
+            <input type="text" id="studyName" required>
+            
+            <label for="method">Study Method:</label>
+            <select id="method" required onchange="setDays()">
+                <option value="method1" data-days="0">Method 1 (Now Only)</option>
+                <option value="method2" data-days="3">Method 2</option>
+                <option value="method3" data-days="5">Method 3</option>
+                <option value="method4" data-days="7">Method 4</option>
+                <option value="method5" data-days="10">Method 5</option>
+                <option value="method6" data-days="14">Method 6</option>
+                <option value="method7" data-days="21">Method 7</option>
+            </select>
+            
+            <label for="days">Repeat After (days):</label>
+            <input type="number" id="days" min="1" required readonly>
+            
+            <button type="submit">Add Study</button>
+        </form>
+        
+        <div id="alertBox" class="hidden">Study Added Successfully!</div>
+        
+        <h2>Upcoming Studies</h2>
+        <ul id="studyList"></ul>
+    </div>
+    
+    <script>
+        function setDays() {
+            const methodSelect = document.getElementById("method");
+            const daysInput = document.getElementById("days");
+            daysInput.value = methodSelect.options[methodSelect.selectedIndex].getAttribute("data-days");
+        }
+        
+        document.getElementById("studyForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+            const studyName = document.getElementById("studyName").value;
+            const method = document.getElementById("method").value;
+            const days = document.getElementById("days").value;
+            
+            fetch("/add_study", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ studyName, method, days })
+            }).then(response => response.json())
+              .then(data => {
+                  showAlert("Study Added Successfully!");
+                  fetchStudies();
+              }).catch(error => console.error("Error:", error));
+        });
+        
+        function showAlert(message) {
+            const alertBox = document.getElementById("alertBox");
+            alertBox.textContent = message;
+            alertBox.classList.remove("hidden");
+            alertBox.classList.add("show");
+            setTimeout(() => {
+                alertBox.classList.remove("show");
+                alertBox.classList.add("hidden");
+            }, 3000);
+        }
+        
+        function fetchStudies() {
+            fetch("/get_studies")
+                .then(response => response.json())
+                .then(data => {
+                    const studyList = document.getElementById("studyList");
+                    studyList.innerHTML = "";
+                    data.forEach(study => {
+                        const li = document.createElement("li");
+                        li.textContent = `${study.name} - ${study.method} (Next: ${study.next_date})`;
+                        
+                        const shiftButton = document.createElement("button");
+                        shiftButton.textContent = "Shift Next Day";
+                        shiftButton.onclick = () => shiftStudy(study.id);
+                        
+                        li.appendChild(shiftButton);
+                        studyList.appendChild(li);
+                    });
+                }).catch(error => console.error("Error fetching studies:", error));
+        }
+        
+        function shiftStudy(studyId) {
+            fetch(`/shift_study/${studyId}`, { method: "POST" })
+                .then(response => response.json())
+                .then(() => fetchStudies())
+                .catch(error => console.error("Error shifting study:", error));
+        }
+        
+        function checkNotifications() {
+            if (!("Notification" in window)) {
+                alert("This browser does not support notifications.");
+                return;
+            }
+            
+            Notification.requestPermission().then(permission => {
+                if (permission === "granted") {
+                    fetch("/get_studies")
+                        .then(response => response.json())
+                        .then(data => {
+                            const today = new Date().toISOString().split("T")[0];
+                            data.forEach(study => {
+                                if (study.next_date === today) {
+                                    new Notification("Study Reminder", {
+                                        body: `Time to review: ${study.name} using ${study.method}`
+                                    });
+                                }
+                            });
+                        }).catch(error => console.error("Error fetching notifications:", error));
+                }
+            });
+        }
+        
+        window.onload = function() {
+            setDays();
+            fetchStudies();
+            checkNotifications();
+        };
+    </script>
+    
+    <style>
+        .hidden { display: none; }
+        .show {
+            display: block;
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: green;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</body>
+</html>
